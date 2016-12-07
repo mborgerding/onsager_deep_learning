@@ -136,7 +136,8 @@ step=20100 elapsed=586.414004087 nic=199 nmse_test=-39.0699940418 nmse_val=-39.3
 
 
 ## [shrinkage.py](shrinkage.py)
-	python module which defines the shrinkage functions we investigated and parameterized
+
+python module which defines the shrinkage functions we investigated and parameterized
 	- soft-threshold (scaled)
 	- piecewise-linear 
 	- exponential
@@ -145,9 +146,8 @@ step=20100 elapsed=586.414004087 nic=199 nmse_test=-39.0699940418 nmse_val=-39.3
 
 ## [utils.py](utils.py)
 
-	Various python/tensorflow utilities.
+Various python/tensorflow utilities.
 
 ## [utils.sh](utils.sh)
 
-	Various shell script utility functions.
-
+Various shell script utility functions.
