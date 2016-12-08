@@ -22,6 +22,10 @@ The included scripts
 - are known to work with CentOS 7 Linux and TensorfFlow 0.9,
 - may sometimes be written in octave/matlab .m files.
 
+##  If you are just looking for an implementation of VAMP ...
+
+You might prefer the Matlab code in [GAMP](https://sourceforge.net/projects/gampmatlab/)/code/VAMP/ 
+
 # Description of Files
 
 ## [save_problem.py](save_problem.py) 
