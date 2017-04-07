@@ -130,12 +130,12 @@ worse.
 We see that backpropagation does its job and finds its way back to
 approximately the same level as with the matched parameters.  The slight difference is explainable by different realizations of the training minibatches.
 ```
-$ ./let_vamp_off_leash.py --T 6  --vamp --trainRate=1e-5  --refinements=0 --stopAfter=200 --errTheta .2 --errV 1e-3
+$ ./let_vamp_off_leash.py --T 6  --trainRate=1e-5  --refinements=0 --stopAfter=200 --errTheta .2 --errV 1e-3 --errISU 1e-3 --errRS2 1e-3
 ...
-initial test_nmse=-33.612dB val_nmse=-33.691dB
-step=10 elapsed=0.604254961014 nic=0 nmse_test=-35.3966007584 nmse_val=-35.5191812551 nmse_val0=-33.6907302155
+step=10 elapsed=1.27413392067 nic=0 nmse_test=-32.9629743724 nmse_val=-33.0911397806 nmse_val0=-30.0131020631 
 ...
-step=20100 elapsed=586.414004087 nic=199 nmse_test=-39.0699940418 nmse_val=-39.369836192 nmse_val0=-33.6907302155 
+step=10050 elapsed=585.011854887 nic=199 nmse_test=-38.9203152625 nmse_val=-39.2310257925 nmse_val0=-30.0131020631 
+
 ```
 
 

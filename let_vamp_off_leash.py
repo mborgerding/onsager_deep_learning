@@ -91,21 +91,21 @@ s = np.sqrt(s2)
 V = ut.diagMult( 1/s, np.matmul( U.T,A)).T
 
 # precompute some tensorflow constants
-rS2 = perturbed_variable('rS2', np.reshape( 1/(s*s),(-1,1) ) , st.errRS2)  # reshape to (M,1) to allow broadcasting
 rj = tf.zeros( (N,L) ,dtype=y_ph.dtype)
 taurj =  tf.reduce_sum(y_ph*y_ph,0)/(N)
 A = st.Psitf
-yvar = perturbed_variable( 'yvar',st.noise_var,st.errYvar )
 
 iSU = ut.diagMult(1/s,U.T).astype(np.float32)
-iSU_ = perturbed_variable('iSU',iSU,st.errISU)
-ytilde = tf.matmul( iSU_,y_ph)  # inv(S)*U*y
-
-V_ = perturbed_variable('V', V.astype(np.float32),st.errV )
-V_T = tf.transpose(V_)
 
 xhat = tf.constant(0,dtype=tf.float32)
 for t in range(st.T):  # layers 0 thru T-1
+    ts = str(t)
+    yvar = perturbed_variable( 'yvar'+ts,st.noise_var,st.errYvar )
+    rS2 = perturbed_variable('rS2'+ts, np.reshape( 1/(s*s),(-1,1) ) , st.errRS2)  # reshape to (M,1) to allow broadcasting
+    iSU_ = perturbed_variable('iSU'+ts,iSU,st.errISU)
+    ytilde = tf.matmul( iSU_,y_ph)  # inv(S)*U*y
+    V_ = perturbed_variable('V'+ts, V.astype(np.float32),st.errV )
+    V_T = tf.transpose(V_)
     # linear step (LMMSE estimation and Onsager correction)
     varRat = tf.reshape(yvar/taurj,(1,-1) ) # one per column
     scaleEach = 1/( 1 + rS2*varRat ) # LMMSE scaling individualized per element {singular dimension,column}
