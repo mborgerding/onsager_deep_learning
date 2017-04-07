@@ -88,7 +88,7 @@ def Setup(st,**kwargs):
     A = st.Psi
     M,N = A.shape
     with tf.Session() as sess:
-        sess.run( tf.initialize_all_variables())
+        sess.run( tf.global_variables_initializer())
         (y, x) = sess.run(st.generators)
 
     mul = np.matmul

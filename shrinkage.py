@@ -197,7 +197,7 @@ def test_func(shrink_func,theta,**kwargs):
     dxdre_ = tf.reduce_mean( (shrink_func(r_+.5*dr_,rvar_ ,theta_)[0] - shrink_func(r_-.5*dr_,rvar_ ,theta_)[0]) / dr_ ,0)
 
     with tf.Session() as sess:
-        sess.run( tf.initialize_all_variables() )
+        sess.run( tf.global_variables_initializer() )
         (x,r) = sess.run((gx,gr))
         fd = {x_:x,r_:r}
         loss_prev = float('inf')
@@ -243,7 +243,7 @@ def show_shrinkage(shrink_func,theta,**kwargs):
     xhat_,dxdr_ = shrink_func(r_,rvar_ ,tfcf(theta))
 
     with tf.Session() as sess:
-        sess.run( tf.initialize_all_variables() )
+        sess.run( tf.global_variables_initializer() )
         xhat = sess.run(xhat_)
     import matplotlib.pyplot as plt
     plt.figure(1)

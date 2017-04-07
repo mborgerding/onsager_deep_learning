@@ -43,7 +43,7 @@ class Setup:
         'construct the object, read common flags (e.g. dimensions,snr,...) '
         import argparse
         tf.reset_default_graph()
-        tf.app.flags.FLAGS = tf.python.platform.flags._FlagValues()
+        tf.app.flags.FLAGS = tf.flags._FlagValues()
         tf.app.flags._global_parser = argparse.ArgumentParser()
 
         self.kwinit = kwargs
@@ -250,7 +250,7 @@ class Setup:
     def noisy_Psi(self):
         'create a coarse estimate of Psi from a randomly drawn (x,y) pair'
         with tf.Session() as sess:
-            sess.run( tf.initialize_all_variables())
+            sess.run( tf.global_variables_initializer())
             (y, x) = sess.run(self.generators)
             #return adjoint(la.lstsq(adjoint(x),adjoint(y)))
         return np.matmul(y ,la.pinv(x) )
@@ -271,7 +271,7 @@ class Setup:
         # training_rate in response to training effectiveness
         self.tr = tf.Variable(self.cfg.trainRate)
         self.train = tf.train.AdamOptimizer(self.tr).minimize( objective_func )
-        self.init = tf.initialize_all_variables()
+        self.init = tf.global_variables_initializer()
 
         self.sess = tf.Session()
         self.sess.run(self.init)
