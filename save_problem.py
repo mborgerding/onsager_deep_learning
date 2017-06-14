@@ -1,32 +1,33 @@
-#!/usr/bin/python -u
-import tensorflow as tf
+#!/usr/bin/python
+from tools import problems
+
 import numpy as np
-import utils as ut
+import numpy.linalg as la
+import os
 
-configurations = (
-        ( {} , 'problem_Giid') ,
-        ( {'kappa':15.} , 'problem_k15'),
-        )
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # BE QUIET!!!!
+import tensorflow as tf
 
-for kw,base in configurations:
-    # set up the inverse problem basic structure with the configuration-specific kw
-    st = ut.Setup(**kw) 
-    y_ph = st.get_input_node()
+np.random.seed(1) # numpy is good about making repeatable output
+tf.set_random_seed(1) # on the other hand, this is basically useless (see issue 9171)
 
-    # the structure inside of Setup doesn't create all the fields until `set_output_node`
-    # so set a dummy value ( not really used ) 
-    st.set_output_node( tf.Variable(1.0,name='junk',dtype=tf.float32) *tf.matmul( ut.adjoint(st.Psitf) , y_ph) )
+# import our problems, networks and training modules
+from tools import problems,networks,train
 
-    # a dictionary with the problem setup
-    prob = st.get_problem_vars()
+from scipy.io import savemat
 
-    # save as a numpy archive
-    np.savez( base  + '.npz' ,**prob)
-    print 'saved numpy archive %s.npz' % base
+def save_problem(base,prob):
+    print('saving {b}.mat,{b}.npz norm(x)={x:.7f} norm(y)={y:.7f}'.format(b=base,x=la.norm(prob.xval), y=la.norm(prob.yval) ) )
+    D=dict(A=prob.A,x=prob.xval,y=prob.yval)
+    np.savez( base + '.npz', **D)
+    savemat(base + '.mat',D,oned_as='column')
 
-    try:
-        from scipy.io import savemat
-        savemat(base + '.mat',prob,oned_as='column')
-        print 'saved matlab file %s.mat' % base
-    except ImportError:
-        pass
+
+save_problem('problem_Giid',problems.bernoulli_gaussian_trial(M=250,N=500,L=1000,pnz=.1,kappa=None,SNR=40))
+save_problem('problem_k15',problems.bernoulli_gaussian_trial(M=250,N=500,L=1000,pnz=.1,kappa=15,SNR=40))
+save_problem('problem_k100',problems.bernoulli_gaussian_trial(M=250,N=500,L=1000,pnz=.1,kappa=100,SNR=40))
+save_problem('problem_rap1',problems.random_access_problem(1))
+save_problem('problem_rap2',problems.random_access_problem(2))
+
+
+

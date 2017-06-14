@@ -6,8 +6,6 @@
 load problem_Giid.mat;disp('loaded Gaussian A problem')
 %load problem_k15.mat;disp('loaded kappa=15 problem')
 L = size(x,2);
-x=xval;
-y=yval;
 [M,N] = size(A);
 Afro2 = norm(A,'fro')^2;
 

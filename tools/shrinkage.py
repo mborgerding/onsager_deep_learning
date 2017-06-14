@@ -28,6 +28,11 @@ A note about dxdr:
     and dxdr is in Real^L
 """
 
+def simple_soft_threshold(r_, lam_):
+    "implement a soft threshold function y=sign(r)*max(0,abs(r)-lam)"
+    lam_ = tf.maximum(lam_, 0)
+    return tf.sign(r_) * tf.maximum(tf.abs(r_) - lam_, 0)
+
 def auto_gradients(xhat , r ):
     """Return the per-column average gradient of xhat xhat with respect to r.
     """
@@ -71,8 +76,8 @@ def shrink_bgest(r,rvar,theta):
         The probability of nonzero x[i]
             lamba = 1/(exp(theta[1])+1)
     """
-    xvar1 = abs(theta[0])
-    loglam = theta[1] # log(1/lambda - 1)
+    xvar1 = abs(theta[...,0])
+    loglam = theta[...,1] # log(1/lambda - 1)
     beta = 1/(1+rvar/xvar1)
     r2scale = r*r*beta/rvar
     rho = tf.exp(loglam - .5*r2scale ) * tf.sqrt(1 +xvar1/rvar)
@@ -85,14 +90,17 @@ def shrink_bgest(r,rvar,theta):
 def shrink_piecwise_linear(r,rvar,theta):
     """Implement the piecewise linear shrinkage function.
         With minor modifications and variance normalization.
-        theta[0] : abscissa of first vertex, scaled by sqrt(rvar)
-        theta[1] : abscissa of second vertex, scaled by sqrt(rvar)
-        theta[2] : slope from origin to first vertex
-        theta[3] : slope from first vertex to second vertex
-        theta[4] : slope after second vertex
+        theta[...,0] : abscissa of first vertex, scaled by sqrt(rvar)
+        theta[...,1] : abscissa of second vertex, scaled by sqrt(rvar)
+        theta[...,2] : slope from origin to first vertex
+        theta[''',3] : slope from first vertex to second vertex
+        theta[...,4] : slope after second vertex
     """
-    vtx = theta[0:2]
-    slopes = theta[2:5]
+    ab0 = theta[...,0]
+    ab1 = theta[...,1]
+    sl0 = theta[...,2]
+    sl1 = theta[...,3]
+    sl2 = theta[...,4]
 
     # scale each column by sqrt(rvar)
     scale_out = tf.sqrt(rvar)
@@ -101,17 +109,37 @@ def shrink_piecwise_linear(r,rvar,theta):
     ra = tf.abs(r*scale_in)
 
     # split the piecewise linear function into regions
-    rgn0 = tf.to_float( ra<vtx[0])
-    rgn1 = tf.to_float( ra<vtx[1]) - rgn0
-    rgn2 = tf.to_float( ra>=vtx[1])
+    rgn0 = tf.to_float( ra<ab0)
+    rgn1 = tf.to_float( ra<ab1) - rgn0
+    rgn2 = tf.to_float( ra>=ab1)
     xhat = scale_out * rs*(
-            rgn0*slopes[0]*ra +
-            rgn1*(slopes[1]*(ra - vtx[0]) + slopes[0]*vtx[0] ) +
-            rgn2*(slopes[2]*(ra - vtx[1]) +  slopes[0]*vtx[0] + slopes[1]*(vtx[1]-vtx[0]) )
+            rgn0*sl0*ra +
+            rgn1*(sl1*(ra - ab0) + sl0*ab0 ) +
+            rgn2*(sl2*(ra - ab1) +  sl0*ab0 + sl1*(ab1-ab0) )
             )
-    dxdr =  slopes[0]*rgn0 + slopes[1]*rgn1 + slopes[2]*rgn2
+    dxdr =  sl0*rgn0 + sl1*rgn1 + sl2*rgn2
     dxdr = tf.reduce_mean(dxdr,0)
     return (xhat,dxdr)
+
+def pwlin_grid(r_,rvar_,theta_,dtheta = .75):
+    """piecewise linear with noise-adaptive grid spacing.
+    returns xhat,dxdr
+    where
+        q = r/dtheta/sqrt(rvar)
+        xhat = r * interp(q,theta)
+
+    all but the  last dimensions of theta must broadcast to r_
+    e.g. r.shape = (500,1000) is compatible with theta.shape=(500,1,7)
+    """
+    ntheta = int(theta_.get_shape()[-1])
+    scale_ = dtheta / tf.sqrt(rvar_)
+    ars_ = tf.clip_by_value( tf.expand_dims( tf.abs(r_)*scale_,-1),0.0, ntheta-1.0 )
+    centers_ = tf.constant( np.arange(ntheta),dtype=tf.float32 )
+    outer_distance_ = tf.maximum(0., 1.0-tf.abs(ars_ - centers_) ) # new dimension for distance to closest bin centers (or center)
+    gain_ = tf.reduce_sum( theta_ * outer_distance_,axis=-1) # apply the gain (learnable)
+    xhat_ = gain_ * r_
+    dxdr_ = tf.gradients(xhat_,r_)[0]
+    return (xhat_,dxdr_)
 
 def shrink_expo(r,rvar,theta):
     """ Exponential shrinkage function
@@ -147,6 +175,7 @@ def get_shrinkage_function(name):
 			'soft':(shrink_soft_threshold,(1.,1.) ),
 			'bg':(shrink_bgest, (1,math.log(1/.1-1)) ),
 			'pwlin':(shrink_piecwise_linear, (2,4,0.1,1.5,.95) ),
+			'pwgrid':(pwlin_grid, np.linspace(.1,1,15).astype(np.float32)  ),
 			'expo':(shrink_expo, (2.5,.9,-1) ),
 			'spline':(shrink_spline, (3.7,.9,-1.5))
 		}[name]
