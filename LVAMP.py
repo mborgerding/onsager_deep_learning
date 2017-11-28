@@ -2,13 +2,15 @@
 from __future__ import division
 from __future__ import print_function
 """
-This file reproduces the "lvamp-bg" trace from Fig 12 of
+This file reproduces the "lvamp-pwlin" trace from Fig 12 of
 
 [1] Borgerding, Mark, Philip Schniter, and Sundeep Rangan. "AMP-Inspired Deep Networks for Sparse Linear Inverse Problems." IEEE Transactions on Signal Processing (2017).
 Available at http://www2.ece.ohio-state.edu/~schniter/pdf/tsp17_lamp.pdf
 
 """
-nlayers=2 # 15 layers will reproduce the whole trace
+nlayers=6 # 15 layers will reproduce the whole trace
+trial_name = 'LVAMP_pwlin_k100'
+
 import numpy as np
 import os
 
@@ -29,7 +31,7 @@ prob = problems.bernoulli_gaussian_trial(
 
 # build an LVAMP network to solve the problem and get the intermediate results so we can greedily extend and then refine(fine-tune)
 print('building the LVAMP network in tensorflow')
-layers = networks.build_LVAMP(prob,T=nlayers,shrink='bg')
+layers = networks.build_LVAMP(prob,T=nlayers,shrink='pwlin')
 
 # plan the learning
 print('setup_training')
@@ -37,4 +39,4 @@ training_stages = train.setup_training(layers,prob,trinit=1e-4,refinements=(.5,.
 
 # do the learning (takes a while)
 print('do_training')
-sess = train.do_training(training_stages,prob,'LVAMP_bg_k100.npz')
+sess = train.do_training(training_stages,prob,trial_name + '.npz')
