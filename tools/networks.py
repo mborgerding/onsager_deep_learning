@@ -198,6 +198,7 @@ def build_LVAMP_dense(prob,T,shrink,iid=False):
         theta_ = tf.Variable(theta_init,name='theta'+str(t),dtype=tf.float32)
 
         xhat_nl_,alpha_nl_ = eta(rhat_nl_ , rvar_nl_,theta_ )
+        alpha_nl_ = tf.maximum(eps,tf.minimum(1-eps, alpha_nl_ ) )
         layers.append( ('LVAMP-{0}  nl T={1}'.format(shrink,1+t),xhat_nl_, (vs_,theta_,) ) )
 
     return layers
